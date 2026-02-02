@@ -1,109 +1,81 @@
-# Trabajo Final para el Curso de IA aplicada al Sector Eléctrico
+# ⚡ Pronóstico de Demanda Eléctrica - PJM Interconnection
+> **Proyecto Final: IA Aplicada al Sector Eléctrico**
 
-1. CONTEXTO
-La predicción precisa de la demanda eléctrica es un componente crítico para la operación eficiente y segura de los sistemas de potencia. En el contexto del sector eléctrico moderno, caracterizado por la integración de energías renovables y la necesidad de eficiencia económica, los operadores del sistema (ISO/RTO) requieren herramientas avanzadas para estimar el consumo futuro.
+Este repositorio contiene el desarrollo de un sistema de predicción de carga eléctrica horaria utilizando técnicas avanzadas de Machine Learning. El objetivo es optimizar la operación de sistemas de potencia mediante pronósticos de alta precisión.
 
-Este proyecto aborda el problema de pronóstico de carga a corto y mediano plazo utilizando técnicas de Inteligencia Artificial y Machine Learning. Se trabaja con datos reales de la interconexión PJM (Región Este), aplicando una metodología rigurosa que va desde la exploración de datos hasta la implementación de modelos de ensamble avanzados.
+---
 
-2. OBJETIVOS
-2.1. Objetivo General
-Desarrollar y evaluar modelos de Machine Learning capaces de pronosticar el consumo eléctrico horario (MW) con alta precisión, minimizando el error porcentual medio.
+## 📌 1. Contexto del Proyecto
+La predicción precisa de la demanda eléctrica es crítica para los operadores de sistema (**ISO/RTO**). En un mercado moderno, con alta integración de renovables, minimizar el error de pronóstico permite:
+* Reducir márgenes de reserva rodante.
+* Optimizar el despacho económico.
+* Evitar penalizaciones por desvíos en el mercado mayorista.
 
-2.2. Objetivos Específicos
-Realizar un Análisis Exploratorio de Datos (EDA) para comprender los patrones estacionales y tendencias del consumo.
-Implementar técnicas de Ingeniería de Características (Feature Engineering) para enriquecer el dataset con variables temporales y de retardo (lags).
-Desarrollar tres modelos predictivos de complejidad incremental: Regresión Lineal, Random Forest y Gradient Boosting.
-Comparar el desempeño de los modelos utilizando métricas estándar de la industria (MAE, RMSE, MAPE, R²).
-3. DESCRIPCIÓN DE LOS DATOS Y PREPROCESAMIENTO
-Fuente de Datos: Histórico de consumo horario de PJM Interconnection (Región Este). Variable Objetivo: PJME_MW (Demanda en Megavatios). Horizonte Temporal: Datos históricos desde 2002 hasta 2018.
+Se trabaja con datos reales de la región **PJM (2002-2018)**, una de las organizaciones de transmisión regional más grandes de EE. UU.
 
-Proceso de Limpieza:
+---
 
-Conversión de Fechas: Se transformó la columna de fecha/hora al formato datetime de Pandas y se estableció como índice del DataFrame.
-Manejo de Outliers: Se identificaron valores atípicos, como consumos inusualmente bajos (< 15,000 MW), que podrían corresponder a fallas de medición o cortes de servicio, para evitar que sesguen el entrenamiento.
-4. ANÁLISIS EXPLORATORIO DE DATOS (EDA)
-El análisis visual y estadístico reveló patrones fundamentales del comportamiento eléctrico:
+## 🎯 2. Objetivos
 
-Ciclo Diario: Se observó la típica curva de "doble joroba" en invierno y pico único vespertino en verano, reflejando hábitos residenciales y comerciales.
-Ciclo Semanal: Diferencias marcadas entre días laborables y fines de semana, siendo estos últimos de menor consumo.
-Estacionalidad Anual: Picos claros en verano (aire acondicionado) e invierno (calefacción), con valles en primavera y otoño (temporadas de transición).
-5. INGENIERÍA DE CARACTERÍSTICAS (FEATURE ENGINEERING)
-Para que los modelos de Machine Learning (que no son nativos de series temporales) puedan aprender patrones temporales, se crearon variables explicativas artificiales:
+* **Objetivo General:** Desarrollar modelos de ML capaces de pronosticar el consumo horario (MW) minimizando el error porcentual medio (MAPE).
+* **Objetivos Específicos:**
+    * Realizar un **Análisis Exploratorio de Datos (EDA)** para identificar estacionalidad.
+    * Implementar **Ingeniería de Características** (Variables temporales y Lags).
+    * Comparar modelos de complejidad incremental: Regresión Lineal, Random Forest y Gradient Boosting.
 
-Variables de Calendario:
+---
 
-hour, dayofweek, quarter, month, year, dayofyear.
-Estas variables permiten al modelo aprender efectos como "los lunes a las 8am sube el consumo".
-Variables de Retardo (Lags):
+## 📊 3. Descripción de los Datos
+* **Fuente:** Histórico de consumo horario de PJM Interconnection (Región Este).
+* **Variable Objetivo:** `PJME_MW` (Demanda en Megavatios).
+* **Preprocesamiento:**
+    * Limpieza de outliers (filtros para valores < 15,000 MW).
+    * Manejo de fechas y estandarización de índices temporales.
 
-lag_1: Consumo de la hora anterior. Captura la inercia térmica y operativa inmediata.
-lag_24: Consumo de la misma hora del día anterior. Captura la periodicidad diaria.
-Se eliminaron las filas con valores NaN generados por el desplazamiento de datos.
-6. METODOLOGÍA DE MODELADO
-Estrategia de División de Datos (Split): Se utilizó una división cronológica estricta para respetar la naturaleza temporal de los datos y evitar el "Data Leakage" (fuga de información del futuro al pasado).
+### Ingeniería de Características (Feature Engineering)
+Se crearon variables explicativas para capturar los ciclos de consumo:
+1.  **Calendario:** `hour`, `dayofweek`, `quarter`, `month`, `year`.
+2.  **Retardos (Lags):**
+    * `lag_1`: Consumo de la hora anterior (Inercia inmediata).
+    * `lag_24`: Consumo de la misma hora del día anterior (Periodicidad diaria).
 
-Conjunto de Entrenamiento (Train): Datos previos al 01-01-2017.
-Conjunto de Prueba (Test): Datos desde el 01-01-2017 en adelante.
-Métricas de Evaluación:
+---
 
-MAE (Mean Absolute Error): Error promedio en MW. Fácil de interpretar.
-RMSE (Root Mean Squared Error): Penaliza errores grandes.
-MAPE (Mean Absolute Percentage Error): Error relativo porcentual. Métricas clave para la industria.
-R² (Coeficiente de Determinación): Capacidad del modelo para explicar la varianza de los datos.
-7. DESARROLLO DE MODELOS Y RESULTADOS
-7.1. Modelo 1: Regresión Lineal (Baseline)
-Descripción: Modelo simple que asume una relación lineal entre las variables de tiempo/lags y la demanda.
-Resultados:
-MAE: 976.56 MW
-MAPE: 3.15%
-R²: 0.9583
-Análisis: Buen punto de partida, pero incapaz de capturar las no-linealidades complejas del comportamiento humano y climático.
-7.2. Modelo 2: Random Forest Regressor
-Descripción: Modelo de ensamble basado en Bagging (Bootstrap Aggregating). Crea múltiples árboles de decisión en paralelo y promedia sus resultados. Robusto ante ruido y outliers.
-Configuración: n_estimators=100, max_depth=20.
-Resultados:
-MAE: 597.59 MW
-MAPE: 1.92%
-R²: 0.9832
-Análisis: Mejora significativa respecto a la regresión lineal. Excelente manejo de relaciones no lineales.
-7.3. Modelo 3: Gradient Boosting Regressor (Campeador)
-Descripción: Modelo de ensamble basado en Boosting. Construye árboles de forma secuencial, donde cada árbol intenta corregir los errores del anterior.
-Configuración: n_estimators=1000, learning_rate=0.01.
-Resultados:
-MAE: 326.06 MW
-MAPE: 1.03%
-R²: 0.9949
-Análisis: Rendimiento superior. Logra un error casi despreciable (1%) para propósitos operativos.
-8. COMPARACIÓN FINAL Y DISCUSIÓN
-La siguiente tabla resume el desempeño en el conjunto de prueba (datos desconocidos para el modelo):
+## 🤖 4. Metodología y Modelado
+Se aplicó una división cronológica estricta para evitar el *Data Leakage*:
+* **Train:** Datos previos al 01-01-2017.
+* **Test:** Datos desde 2017 hasta 2018.
 
-Modelo	MAE (MW)	RMSE (MW)	R²	MAPE (%)
-Gradient Boosting	326.06	438.08	0.9949	1.03%
-Random Forest	597.59	794.76	0.9832	1.92%
-Regresión Lineal	976.56	1,250.44	0.9583	3.15%
-8.1. Análisis Comparativo de Desempeño
-El modelo de Gradient Boosting superó consistentemente a las otras arquitecturas en todas las métricas evaluadas. Su capacidad para reducir el MAE a 326.06 MW representa una mejora del 45% respecto al Random Forest y del 66% respecto a la Regresión Lineal. Esto valida la hipótesis de que los métodos de boosting, al corregir iterativamente los errores de predicción, son superiores para capturar la estructura fina de la demanda eléctrica.
+### 🏆 Resultados Comparativos
 
-8.2. Interpretación de la Importancia de Variables (Feature Importance)
-El análisis de importancia de características en los modelos basados en árboles reveló una jerarquía clara en los predictores:
+| Modelo | MAE (MW) | RMSE (MW) | MAPE (%) | $R^2$ |
+| :--- | :---: | :---: | :---: | :---: |
+| **Gradient Boosting** | **326.06** | **438.08** | **1.03%** | **0.9949** |
+| Random Forest | 597.59 | 794.76 | 1.92% | 0.9832 |
+| Regresión Lineal | 976.56 | 1,250.44 | 3.15% | 0.9583 |
 
-Dominancia de la Inercia (lag_1): La variable más influyente fue el consumo de la hora anterior. Esto indica que el sistema eléctrico tiene una "memoria" de corto plazo muy fuerte; el estado actual depende fundamentalmente del estado inmediato anterior.
-Ciclicidad Diaria (lag_24): El segundo predictor más potente fue el consumo a la misma hora del día anterior, capturando los hábitos de consumo repetitivos de la población y la industria.
-Variables de Calendario: Aunque menos críticas que los lags, las variables como hour y dayofweek fueron esenciales para modelar los perfiles de carga intra-diarios y las diferencias entre días laborales y festivos.
-9. CONCLUSIONES
-Viabilidad Tecnológica: El uso de algoritmos de Boosting (como XGBoost o GradientBoostingRegressor de scikit-learn) es altamente efectivo para series temporales de alta frecuencia como la demanda eléctrica. Su capacidad para reducir el sesgo y la varianza de forma secuencial los hace superiores a modelos más simples o incluso a otros métodos de ensamble como Random Forest en contextos donde la precisión es crítica.
-Importancia de la Ingeniería de Características: La incorporación de variables de retardo (lags) demostró ser el factor más determinante para el rendimiento predictivo, superando en impacto a la propia selección del algoritmo. Esto confirma que, en problemas de series temporales de energía, la correcta representación de la inercia del sistema y los patrones cíclicos (diarios y semanales) es fundamental.
-Impacto Operativo y Económico: Lograr un modelo con un error porcentual (MAPE) cercano al 1% tiene implicaciones directas en la operación del sistema eléctrico. Permite a los operadores reducir los márgenes de reserva rodante y optimizar el despacho económico, traduciéndose en una operación más eficiente y en una reducción significativa de costos operativos y de penalizaciones por desvíos.
-Limitaciones de los Modelos Lineales: El bajo desempeño relativo de la Regresión Lineal (MAPE > 3%) evidenció que la relación entre la demanda eléctrica y sus factores determinantes es intrínsecamente no lineal. Los modelos lineales no logran capturar adecuadamente la saturación de la demanda en picos extremos ni las interacciones complejas entre variables temporales.
-Generalización y Robustez: El modelo de Gradient Boosting demostró una excelente capacidad de generalización al ser evaluado en un conjunto de prueba temporalmente separado (2017 en adelante). Esto sugiere que el modelo no ha "memorizado" los datos de entrenamiento, sino que ha aprendido patrones estructurales robustos que se mantienen en el tiempo, validando su uso en entornos de producción reales.
-10. RECOMENDACIONES FUTURAS
-Integración de Variables Meteorológicas: Se recomienda encarecidamente incorporar datos históricos de temperatura, humedad y radiación solar. La demanda eléctrica es altamente sensible al clima (efecto térmico), y la inclusión de estas variables exógenas es el siguiente paso lógico para reducir los errores residuales, especialmente durante olas de calor o frío extremo.
-Exploración de Modelos de Aprendizaje Profundo (Deep Learning): Evaluar arquitecturas de redes neuronales recurrentes, específicamente LSTM (Long Short-Term Memory) o GRU (Gated Recurrent Units). Estas redes están diseñadas específicamente para capturar dependencias temporales de largo plazo y no linealidades complejas que podrían escapar a los modelos de árboles de decisión tradicionales.
-Implementación de MLOps y Reentrenamiento Continuo: Desarrollar un pipeline automatizado de MLOps que permita el monitoreo constante del desempeño del modelo (detección de Data Drift) y su reentrenamiento periódico. El comportamiento del consumo eléctrico evoluciona con el tiempo, y un sistema estático perderá precisión si no se actualiza con nuevos datos.
-Optimización Avanzada de Hiperparámetros: Realizar una búsqueda exhaustiva de hiperparámetros utilizando técnicas como Bayesian Optimization o RandomizedSearchCV. Aunque el modelo actual tiene un buen desempeño, un ajuste fino de parámetros como la tasa de aprendizaje, la profundidad de los árboles y el número de estimadores podría exprimir aún más la precisión del modelo.
-Análisis Desagregado de Errores: Llevar a cabo un diagnóstico detallado de los errores del modelo estratificado por hora del día, día de la semana y temporada. Identificar los momentos específicos donde el modelo falla (por ejemplo, días festivos atípicos o transiciones de horario de verano) permitiría desarrollar estrategias de corrección específicas, como modelos dedicados para días especiales.
-Bibliografía y Herramientas Utilizadas:
 
-Python 3.14
-Librerías: Pandas, NumPy, Scikit-Learn, Matplotlib, Seaborn.
-Entorno: Google Colab / Google Antigravity.
+
+---
+
+## 💡 5. Conclusiones
+* **Superioridad del Boosting:** El modelo **Gradient Boosting** redujo el error en un 66% respecto a la Regresión Lineal, demostrando que la demanda eléctrica es un fenómeno intrínsecamente no lineal.
+* **Poder de la Inercia:** El análisis de *Feature Importance* reveló que el **lag_1** y el **lag_24** son los predictores más críticos, confirmando la fuerte memoria de corto plazo del sistema eléctrico.
+* **Impacto Operativo:** Lograr un MAPE del **1.03%** representa un nivel de precisión de clase mundial para pronósticos de corto plazo.
+
+---
+
+## 🚀 6. Recomendaciones Futuras
+1.  **Variables Exógenas:** Integrar datos de **temperatura y humedad** para capturar la sensibilidad térmica (uso de aire acondicionado/calefacción).
+2.  **Deep Learning:** Evaluar redes neuronales recurrentes tipo **LSTM** para capturar dependencias temporales de largo plazo.
+3.  **MLOps:** Implementar pipelines de monitoreo de *Data Drift* para asegurar la vigencia del modelo en el tiempo.
+
+---
+
+## 🛠️ Stack Tecnológico
+* **Lenguaje:** Python 3.12+
+* **Librerías:** `Pandas`, `NumPy`, `Scikit-Learn`, `Matplotlib`, `Seaborn`.
+* **Entorno:** Google Colab / Jupyter.
+
+---
+**Autor:** [lucho-dev4energy](https://github.com/lucho-dev4energy)
